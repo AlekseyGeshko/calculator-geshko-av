@@ -1,0 +1,49 @@
+BasedOnStyle: google
+IndentWidth: 4
+ColumnLimit: 0
+
+Language: Cpp
+AccessModifierOffset: -4
+DerivePointerAlignment: false
+IndentCaseBlocks: true
+IndentCaseLabels: false
+PointerAlignment: Left
+PackConstructorInitializers: Never
+BreakConstructorInitializers: AfterColon
+BreakBeforeBinaryOperators: NonAssignment
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterNamespace: false
+  AfterFunction: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: 'global.h|stdafx.h'
+    Priority: -1
+  - Regex: '^<Qt?[A-Z][^.]+>$'
+    Priority: 2
+    SortPriority: 3
+  - Regex: '^<(core|test|widgets)/'
+    Priority: 4
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '<.*'
+    Priority: 2
+
+MacroBlockBegin: '^.*_BEGIN$'
+MacroBlockEnd: '^.*_END$'
