@@ -1,4 +1,3 @@
-*.env
-*.exe
-*.o
-*.out
+build/
+googletest/
+.idea/
