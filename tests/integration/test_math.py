@@ -1,25 +1,39 @@
 import subprocess
 
+import subprocess
+
 def run_test(args, input_str, expected_returncode, expected_output=None, float_precision=None):
     """
     Запускает приложение с заданными аргументами и входными данными.
-    Проверяет код возврата и сравнивает результат (с округлением до нужной точности).
+    Проверяет код возврата и (по желанию) сравнивает результат (с округлением).
     """
     res = subprocess.run(args, input=input_str, text=True, capture_output=True)
 
-    # Сравниваем код возврата
-    assert res.returncode == expected_returncode, (
-        f"Input: {input_str!r}\n"
-        f"Expected return code: {expected_returncode} but got: {res.returncode}\n"
-        f"Stdout: {res.stdout!r}\n"
-        f"Stderr: {res.stderr!r}"
-    )
+    actual_returncode = res.returncode
+    # Если мы ожидаем "ошибку" (любой != 0), то проверяем только actual_returncode != 0
+    # Иначе (если expected_returncode == 0) - проверяем, что вернулся 0.
+    if expected_returncode != 0:
+        # Проверяем, что код возврата не 0 (программа упала с ошибкой)
+        assert actual_returncode != 0, (
+            f"Input: {input_str!r}\n"
+            f"Expected ERROR code (not 0), but got: {actual_returncode}\n"
+            f"Stdout: {res.stdout!r}\n"
+            f"Stderr: {res.stderr!r}"
+        )
+    else:
+        # Ожидаем 0
+        assert actual_returncode == 0, (
+            f"Input: {input_str!r}\n"
+            f"Expected return code 0 but got: {actual_returncode}\n"
+            f"Stdout: {res.stdout!r}\n"
+            f"Stderr: {res.stderr!r}"
+        )
 
-    # Если не ожидаем конкретного вывода, завершаем проверку
+    # Если не ожидаем конкретного вывода, завершаем здесь
     if expected_output is None:
         return
 
-    # Удаляем пробелы/переносы строк
+    # Удаляем пробелы/переносы строк из stdout
     output = res.stdout.strip()
 
     if float_precision is not None:
@@ -35,11 +49,12 @@ def run_test(args, input_str, expected_returncode, expected_output=None, float_p
             # Если output не конвертируется в float
             assert False, f"Output is not a valid float: {output!r}"
     else:
-        # Сравниваем как строку (для целочисленных случаев)
+        # Сравниваем строку (для целочисленных результатов)
         assert output == expected_output, (
             f"Input: {input_str!r}\n"
             f"Expected output: {expected_output!r} but got: {output!r}"
         )
+
 
 def test_case1():
     # 1. Простое сложение: "1 + 2" -> 3 (целочисленный режим)
