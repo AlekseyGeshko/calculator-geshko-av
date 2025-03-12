@@ -1,7 +1,5 @@
 import subprocess
 
-import subprocess
-
 def run_test(args, input_str, expected_returncode, expected_output=None, float_precision=None):
     """
     Запускает приложение с заданными аргументами и входными данными.

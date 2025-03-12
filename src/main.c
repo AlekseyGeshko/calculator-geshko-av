@@ -323,7 +323,6 @@ int main(int argc, char *argv[])
     char buffer[INPUT_SIZE];
     char input[INPUT_SIZE] = "";
 
-    /* Читаем весь входной поток до EOF */
     while (fgets(buffer, sizeof(buffer), stdin))
     {
         strcat(input, buffer);
@@ -334,12 +333,11 @@ int main(int argc, char *argv[])
 
     char *expression = input;
 
-    /* После разбора проверяем, что в строке не осталось лишних символов */
     if (use_float)
     {
         double result = parseExpressionF(&expression);
         skipSpaces(&expression);
-        if (*expression != '\0') // Если есть лишние символы, это ошибка
+        if (*expression != '\0')
             exit(1);
         printf("%f\n", result);
     }
@@ -347,7 +345,7 @@ int main(int argc, char *argv[])
     {
         int result = parseExpression(&expression);
         skipSpaces(&expression);
-        if (*expression != '\0') // Если есть лишние символы, это ошибка
+        if (*expression != '\0')
             exit(1);
         printf("%d\n", result);
     }
