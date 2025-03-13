@@ -133,12 +133,28 @@ run-unit-test: build/unit-tests.exe
 # Python venv + integration tests
 ###############################################################################
 venv:
-	@echo "Creating virtual environment $(VENV_DIR)"
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-	  python3 -m venv $(VENV_DIR); \
-	  $(VENV_DIR)/bin/pip install --upgrade pip pytest; \
-	fi
+	@echo "Re-creating virtual environment $(VENV_DIR) from scratch..."
+	python3 -m venv $(VENV_DIR)
+	$(VENV_DIR)/bin/pip install --upgrade pip
+	$(VENV_DIR)/bin/pip install pytest structlog
 
 run-integration-tests: build/app.exe venv tests/integration/test_math.py
 	@echo "Running integration tests with pytest..."
 	@. $(VENV_DIR)/bin/activate && $(VENV_DIR)/bin/pytest tests/integration/test_math.py
+
+###############################################################################
+# Запуск Python-сервера (run-server)
+###############################################################################
+run-server: build/app.exe venv
+	@echo "Starting Python server..."
+	$(VENV_DIR)/bin/python server/server.py
+
+
+###############################################################################
+# Запуск интеграционных тестов (сервер)
+###############################################################################
+run-integration-tests-server: build/app.exe venv
+	@echo "Running integration tests for the Python server..."
+	@. $(VENV_DIR)/bin/activate && \
+	  pip install requests && \
+	  pytest tests/integration/test_server.py
