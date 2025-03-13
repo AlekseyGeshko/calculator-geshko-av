@@ -1,5 +1,6 @@
 import subprocess
 
+
 def run_test(args, input_str, expected_returncode, expected_output=None, float_precision=None):
     """
     Запускает приложение с заданными аргументами и входными данными.
@@ -38,7 +39,7 @@ def run_test(args, input_str, expected_returncode, expected_output=None, float_p
         # Сравниваем как float с округлением
         try:
             expected_val = round(float(expected_output), float_precision)
-            output_val   = round(float(output), float_precision)
+            output_val = round(float(output), float_precision)
             assert output_val == expected_val, (
                 f"Input: {input_str!r}\n"
                 f"Expected float output: {expected_val:.{float_precision}f} but got: {output!r}"
@@ -58,14 +59,17 @@ def test_case1():
     # 1. Простое сложение: "1 + 2" -> 3 (целочисленный режим)
     run_test(["./build/app.exe"], "1 + 2", 0, "3")
 
+
 def test_case2():
     # 2. Разные количества скобок (правильно сбалансированы):
     # "1 + 2 * ((3 - 4))" -> 3-4=-1, 2*-1=-2, 1+(-2)=-1
     run_test(["./build/app.exe"], "1 + 2 * ((3 - 4))", 0, "-1")
 
+
 def test_case3():
     # 3. Глубокая вложенность
     run_test(["./build/app.exe"], "(((((((((((((((((((((((((((1)))))))))))))))))))))))))))", 0, "1")
+
 
 def test_case4():
     # 4. Выражение около 1KiB по длине.
@@ -73,9 +77,11 @@ def test_case4():
     expr = "+".join(["1"] * 502)
     run_test(["./build/app.exe"], expr, 0, "502")
 
+
 def test_case5():
     # 5. Некорректный ввод знаков: "1 ++ 2" – два плюса подряд, должно выдать ошибку.
     run_test(["./build/app.exe"], "1 ++ 2", 1)
+
 
 def test_case6():
     """
@@ -90,38 +96,47 @@ def test_case6():
         float_precision=4
     )
 
+
 def test_case7():
     # 7. Некорректный ввод символов: "abc + 5" – буквы недопустимы.
     run_test(["./build/app.exe"], "abc + 5", 1)
+
 
 def test_case8():
     # 8. Умножение чисел: "2 * 3" -> 6
     run_test(["./build/app.exe"], "2 * 3", 0, "6")
 
+
 def test_case9():
     # 9. Деление чисел (целочисленно): "10 / 3" -> 3
     run_test(["./build/app.exe"], "10 / 3", 0, "3")
 
+
 def test_case10():
     # 10. Вычитание: "10 - 4" -> 6
     run_test(["./build/app.exe"], "10 - 4", 0, "6")
+
 
 def test_case11():
     # 11. Комбинированное выражение: "1 + 2 * 3 - 4 / 2"
     # 2*3=6, 4/2=2, итого 1+6-2=5
     run_test(["./build/app.exe"], "1 + 2 * 3 - 4 / 2", 0, "5")
 
+
 def test_case12():
     # 12. Выражение с унарным минусом в скобках
-    run_test(["./build/app.exe"], "1 - (3 + 4)",0 , "-6")
+    run_test(["./build/app.exe"], "1 - (3 + 4)", 0, "-6")
+
 
 def test_case13():
     # 13. Двойной унарный минус: "--3" -> 3
     run_test(["./build/app.exe"], "--3", 1)
 
+
 def test_case14():
     # 14. Комбинация унарного и бинарного минуса: "-3 * (2 + 4)" -> -3 * 6 = -18
     run_test(["./build/app.exe"], "-3 * (2 + 4)", 1)
+
 
 def test_case15():
     """
@@ -135,6 +150,7 @@ def test_case15():
         float_precision=4
     )
 
+
 def test_case16():
     """
     16. "10 / 3" в режиме float => 3.3333 (округляем до 4 знаков)
@@ -147,6 +163,7 @@ def test_case16():
         float_precision=4
     )
 
+
 def test_case18():
     """
     18. Сложение в режиме float: "3.5 + 2.5" => 6.0
@@ -156,10 +173,11 @@ def test_case18():
     run_test(
         ["./build/app.exe", "--float"],
         "3 + 2/3",
-        0,          # Ожидаем успешный возврат
-        "3.6667",      # Проверяем как float
+        0,  # Ожидаем успешный возврат
+        "3.6667",  # Проверяем как float
         float_precision=4
     )
+
 
 def test_case20():
     """
@@ -173,9 +191,11 @@ def test_case20():
         float_precision=4
     )
 
+
 def test_case21():
     # 20. Умножение и деление в режиме float
     run_test(["./build/app.exe", "--float"], "(3 * 2) / +4", 1)
+
 
 def run_all_tests():
     tests = [
@@ -204,6 +224,7 @@ def run_all_tests():
     for test in tests:
         test()
         print(f"{test.__name__} passed.")
+
 
 if __name__ == "__main__":
     run_all_tests()
