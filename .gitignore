@@ -1,3 +1,5 @@
 build/
 googletest/
 .idea/
+server/__*
+tests/integration/__*
