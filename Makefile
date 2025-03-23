@@ -136,7 +136,7 @@ venv:
 	@echo "Re-creating virtual environment $(VENV_DIR) from scratch..."
 	python3 -m venv $(VENV_DIR)
 	$(VENV_DIR)/bin/pip install --upgrade pip
-	$(VENV_DIR)/bin/pip install pytest structlog fastapi uvicorn
+	$(VENV_DIR)/bin/pip install pytest structlog fastapi uvicorn requests PySide6
 
 run-integration-tests: build/app.exe venv tests/integration/test_math.py
 	@echo "Running integration tests with pytest..."
@@ -148,6 +148,13 @@ run-integration-tests: build/app.exe venv tests/integration/test_math.py
 run-server: build/app.exe venv
 	@echo "Starting FastAPI server..."
 	PYTHONPATH=server $(VENV_DIR)/bin/uvicorn server.server:app --host 0.0.0.0 --port 8000
+
+###############################################################################
+# Запуск GUI (run-gui)
+###############################################################################
+run-gui: venv
+	@echo "Запуск GUI"
+	$(VENV_DIR)/bin/python gui/main.py
 
 ###############################################################################
 # Запуск интеграционных тестов (сервер)
