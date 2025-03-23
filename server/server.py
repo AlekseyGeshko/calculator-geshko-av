@@ -1,123 +1,71 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import urllib.parse
-import json
+from fastapi import FastAPI, Request, HTTPException, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import subprocess
 import structlog
+import uvicorn
+import json
 
 from logging_conf import configure_logging
 
-logger = None
+logger = configure_logging()
+app = FastAPI()
 
 
-class CalcRequestHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
-        query_params = urllib.parse.parse_qs(parsed_url.query)
-
-        logger.info("request_received", method="POST", path=path, query=query_params)
-
-        if path != "/calc":
-            self.send_response(500)
-            self.end_headers()
-            response = {"error": "Not Found"}
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.warning("not_found", path=path)
-            return
-
-        content_length = int(self.headers.get("Content-Length", 0))
-        if content_length == 0:
-            self.send_response(500)
-            self.end_headers()
-            response = {"error": "Empty body"}
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.error("empty_body")
-            return
-
-        raw_body = self.rfile.read(content_length)
-        content_type = self.headers.get("Content-Type", "")
-
-        if "application/json" not in content_type:
-            self.send_response(500)
-            self.end_headers()
-            response = {"error": "Invalid content type, must be application/json"}
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.error("invalid_content_type", content_type=content_type)
-            return
-
-        try:
-            expression = json.loads(raw_body)
-            if not isinstance(expression, str):
-                expression = str(expression)
-        except Exception as e:
-            self.send_response(500)
-            self.end_headers()
-            response = {"error": f"Invalid JSON: {e}"}
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.exception("invalid_json")
-            return
-
-        use_float = False
-        if "float" in query_params:
-            val = query_params["float"][0].lower()
-            if val == "true":
-                use_float = True
-
-        logger.info("received_expression", expression=expression, float_mode=use_float)
-
-        cmd = ["./build/app.exe"]
-        if use_float:
-            cmd.append("--float")
-
-        try:
-            result = subprocess.run(
-                cmd,
-                input=expression,
-                text=True,
-                capture_output=True
-            )
-        except Exception as e:
-            self.send_response(500)
-            self.end_headers()
-            response = {"error": f"Subprocess error: {e}"}
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.exception("subprocess_run_error", cmd=cmd)
-            return
-
-        if result.returncode != 0:
-            self.send_response(500)
-            self.end_headers()
-            response = {
-                "error": "Calculation error",
-                "stderr": result.stderr.strip()
-            }
-            self.wfile.write(json.dumps(response).encode("utf-8"))
-            logger.error("calc_error", returncode=result.returncode, stderr=result.stderr)
-            return
-        else:
-            output = result.stdout.strip()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(output).encode("utf-8"))
-            logger.info("calc_success", output=output, returncode=result.returncode)
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error("validation_error", detail=str(exc))
+    return JSONResponse(
+        status_code=400,
+        content={"error": "Invalid JSON or missing body"},
+    )
 
 
-def run_server(host="0.0.0.0", port=8000):
-    global logger
-    logger = configure_logging()
-    logger.info("server_start", host=host, port=port)
+@app.post("/calc")
+async def calculate(request: Request, float: bool = False):
+    logger.info("request_received", method="POST", url=str(request.url), float=float)
 
-    httpd = HTTPServer((host, port), CalcRequestHandler)
-    logger.info("server_listening", address=f"{host}:{port}")
+    if request.headers.get("content-type") != "application/json":
+        logger.error("invalid_content_type", content_type=request.headers.get("content-type"))
+        return JSONResponse(status_code=400, content={"error": "Invalid content type, must be application/json"})
+
     try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        httpd.server_close()
-        logger.info("server_stopped")
+        body = await request.body()
+        if not body:
+            raise ValueError("Empty body")
 
+        expression = json.loads(body.decode("utf-8"))
+        if not isinstance(expression, str):
+            expression = str(expression)
 
-if __name__ == "__main__":
-    run_server()
+    except Exception as e:
+        logger.exception("invalid_json", error=str(e))
+        return JSONResponse(status_code=400, content={"error": f"Invalid JSON: {e}"})
+
+    cmd = ["./build/app.exe"]
+    if float:
+        cmd.append("--float")
+
+    logger.info("executing_subprocess", cmd=cmd, expression=expression)
+
+    try:
+        result = subprocess.run(
+            cmd,
+            input=expression,
+            text=True,
+            capture_output=True
+        )
+    except Exception as e:
+        logger.exception("subprocess_error", error=str(e))
+        return JSONResponse(status_code=500, content={"error": f"Subprocess error: {e}"})
+
+    if result.returncode != 0:
+        logger.error("calc_error", stderr=result.stderr.strip())
+        return JSONResponse(
+            status_code=500,
+            content={"error": result.stderr.strip()}
+        )
+
+    output = result.stdout.strip()
+    logger.info("calc_success", output=output)
+    return JSONResponse(content=output)
