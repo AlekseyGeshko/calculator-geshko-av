@@ -3,3 +3,4 @@ googletest/
 .idea/
 server/__*
 tests/integration/__*
+*.db
