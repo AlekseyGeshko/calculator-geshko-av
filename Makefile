@@ -133,10 +133,11 @@ run-unit-test: build/unit-tests.exe
 # Python venv + integration tests
 ###############################################################################
 venv:
-	@echo "Re-creating virtual environment $(VENV_DIR) from scratch..."
 	python3 -m venv $(VENV_DIR)
 	$(VENV_DIR)/bin/pip install --upgrade pip
-	$(VENV_DIR)/bin/pip install pytest structlog fastapi uvicorn requests PySide6
+	$(VENV_DIR)/bin/pip install \
+		pytest structlog fastapi requests PySide6 \
+		uvicorn[standard]
 
 run-integration-tests: build/app.exe venv tests/integration/test_math.py
 	@echo "Running integration tests with pytest..."
