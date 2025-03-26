@@ -66,6 +66,10 @@ clone-gtest:
 # clang-format
 ###############################################################################
 clang-format:
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+	  echo "clang-format not found. Installing..."; \
+	  sudo apt-get update && sudo apt-get install -y clang-format; \
+	fi
 	@echo "Running clang-format..."
 	find . -regex '.*\.\(h\|c\|cpp\)$$' -exec clang-format -i {} +
 
@@ -88,12 +92,12 @@ build/app-test.o: $(APP_SRC)
 ###############################################################################
 # Сборка Google Test (gtest-all.o, gtest_main.o, gtest_main.a)
 ###############################################################################
-$(GTEST_ALL_OBJ): $(GTEST_SRC_DIR)/gtest-all.cc $(GTEST_HEADERS)
+$(GTEST_ALL_OBJ): $(GTEST_SRC_DIR)/gtest-all.cc
 	@echo "Building gtest-all.o"
 	@mkdir -p $(GTEST_BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) -c $< -o $@
 
-$(GTEST_MAIN_OBJ): $(GTEST_SRC_DIR)/gtest_main.cc $(GTEST_HEADERS)
+$(GTEST_MAIN_OBJ): $(GTEST_SRC_DIR)/gtest_main.cc
 	@echo "Building gtest_main.o"
 	@mkdir -p $(GTEST_BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) -c $< -o $@
