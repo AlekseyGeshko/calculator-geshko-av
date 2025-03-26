@@ -49,7 +49,7 @@ class CalcWorker(QThread):
                     error_msg = response.json().get("error", "Неизвестная ошибка")
                 except Exception:
                     error_msg = "Не удалось обработать ответ от сервера"
-                self.error_occurred.emit(f"Ошибка вычисления: {error_msg}")
+                self.error_occurred.emit(f"Ошибка вычисления {error_msg}")
 
         except requests.exceptions.ConnectionError:
             self.error_occurred.emit("Сервер недоступен. Попробуйте позже.")
